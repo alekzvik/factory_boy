@@ -26,7 +26,8 @@ use the :class:`~factory.SubFactory` declaration:
     from . import models
 
     class UserFactory(factory.django.DjangoModelFactory):
-        FACTORY_FOR = models.User
+        class Meta:
+            model = models.User
 
         first_name = factory.Sequence(lambda n: "Agent %03d" % n)
         group = factory.SubFactory(GroupFactory)
@@ -53,7 +54,8 @@ use a :class:`~factory.RelatedFactory` declaration:
 
     # factories.py
     class UserFactory(factory.django.DjangoModelFactory):
-        FACTORY_FOR = models.User
+        class Meta:
+            model = models.User
 
         log = factory.RelatedFactory(UserLogFactory, 'user', action=models.UserLog.ACTION_CREATE)
 
@@ -75,7 +77,8 @@ factory_boy allows to define attributes of such profiles dynamically when creati
 .. code-block:: python
 
     class ProfileFactory(factory.django.DjangoModelFactory):
-        FACTORY_FOR = my_models.Profile
+        class Meta:
+            model = my_models.Profile
 
         title = 'Dr'
         # We pass in profile=None to prevent UserFactory from creating another profile
@@ -83,7 +86,8 @@ factory_boy allows to define attributes of such profiles dynamically when creati
         user = factory.SubFactory('app.factories.UserFactory', profile=None)
 
     class UserFactory(factory.django.DjangoModelFactory):
-        FACTORY_FOR = auth_models.User
+        class Meta:
+            model = auth_models.User
 
         username = factory.Sequence(lambda n: "user_%d" % n)
 
@@ -145,12 +149,14 @@ hook:
 
     # factories.py
     class GroupFactory(factory.django.DjangoModelFactory):
-        FACTORY_FOR = models.Group
+        class Meta:
+            model = models.Group
 
         name = factory.Sequence(lambda n: "Group #%s" % n)
 
     class UserFactory(factory.django.DjangoModelFactory):
-        FACTORY_FOR = models.User
+        class Meta:
+            model = models.User
 
         name = "John Doe"
 
@@ -200,17 +206,20 @@ If more links are needed, simply add more :class:`RelatedFactory` declarations:
 
     # factories.py
     class UserFactory(factory.django.DjangoModelFactory):
-        FACTORY_FOR = models.User
+        class Meta:
+            model = models.User
 
         name = "John Doe"
 
     class GroupFactory(factory.django.DjangoModelFactory):
-        FACTORY_FOR = models.Group
+        class Meta:
+            model = models.Group
 
         name = "Admins"
 
     class GroupLevelFactory(factory.django.DjangoModelFactory):
-        FACTORY_FOR = models.GroupLevel
+        class Meta:
+            model = models.GroupLevel
 
         user = factory.SubFactory(UserFactory)
         group = factory.SubFactory(GroupFactory)
@@ -273,20 +282,23 @@ Here, we want:
 
     # factories.py
     class CountryFactory(factory.django.DjangoModelFactory):
-        FACTORY_FOR = models.Country
+        class Meta:
+            model = models.Country
 
         name = factory.Iterator(["France", "Italy", "Spain"])
         lang = factory.Iterator(['fr', 'it', 'es'])
 
     class UserFactory(factory.django.DjangoModelFactory):
-        FACTORY_FOR = models.User
+        class Meta:
+            model = models.User
 
         name = "John"
         lang = factory.SelfAttribute('country.lang')
         country = factory.SubFactory(CountryFactory)
 
     class CompanyFactory(factory.django.DjangoModelFactory):
-        FACTORY_FOR = models.Company
+        class Meta:
+            model = models.Company
 
         name = "ACME, Inc."
         country = factory.SubFactory(CountryFactory)
@@ -302,14 +314,16 @@ default :meth:`Model.objects.create() <django.db.models.query.QuerySet.create>` 
 .. code-block:: python
 
    class UserFactory(factory.DjangoModelFactory):
-       FACTORY_FOR = UserenaSignup
+       class Meta:
+           model = UserenaSignup
+
        username = "l7d8s"
        email = "my_name@example.com"
        password = "my_password"
 
        @classmethod
-       def _create(cls, target_class, *args, **kwargs):
+       def _create(cls, model_class, *args, **kwargs):
            """Override the default ``_create`` with our custom call."""
-           manager = cls._get_manager(target_class)
+           manager = cls._get_manager(model_class)
            # The default would use ``manager.create(*args, **kwargs)``
            return manager.create_user(*args, **kwargs)

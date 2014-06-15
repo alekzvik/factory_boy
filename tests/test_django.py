@@ -99,53 +99,71 @@ def tearDownModule():
 
 
 class StandardFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = models.StandardModel
+    class Meta:
+        model = models.StandardModel
 
     foo = factory.Sequence(lambda n: "foo%d" % n)
 
 
 class StandardFactoryWithPKField(factory.django.DjangoModelFactory):
-    FACTORY_FOR = models.StandardModel
-    FACTORY_DJANGO_GET_OR_CREATE = ('pk',)
+    class Meta:
+        model = models.StandardModel
+        django_get_or_create = ('pk',)
 
     foo = factory.Sequence(lambda n: "foo%d" % n)
     pk = None
 
 
 class NonIntegerPkFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = models.NonIntegerPk
+    class Meta:
+        model = models.NonIntegerPk
 
     foo = factory.Sequence(lambda n: "foo%d" % n)
     bar = ''
 
 
 class AbstractBaseFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = models.AbstractBase
-    ABSTRACT_FACTORY = True
+    class Meta:
+        model = models.AbstractBase
+        abstract = True
 
     foo = factory.Sequence(lambda n: "foo%d" % n)
 
 
 class ConcreteSonFactory(AbstractBaseFactory):
-    FACTORY_FOR = models.ConcreteSon
+    class Meta:
+        model = models.ConcreteSon
+
+
+class AbstractSonFactory(AbstractBaseFactory):
+    class Meta:
+        model = models.AbstractSon
+
+
+class ConcreteGrandSonFactory(AbstractBaseFactory):
+    class Meta:
+        model = models.ConcreteGrandSon
 
 
 class WithFileFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = models.WithFile
+    class Meta:
+        model = models.WithFile
 
     if django is not None:
         afile = factory.django.FileField()
 
 
 class WithImageFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = models.WithImage
+    class Meta:
+        model = models.WithImage
 
     if django is not None:
         animage = factory.django.ImageField()
 
 
 class WithSignalsFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = models.WithSignals
+    class Meta:
+        model = models.WithSignals
 
 
 @unittest.skipIf(django is None, "Django not installed.")
@@ -212,17 +230,20 @@ class DjangoPkForceTestCase(django_test.TestCase):
 
 @unittest.skipIf(django is None, "Django not installed.")
 class DjangoModelLoadingTestCase(django_test.TestCase):
-    """Tests FACTORY_FOR = 'app.Model' pattern."""
+    """Tests class Meta:
+     model = 'app.Model' pattern."""
 
     def test_loading(self):
         class ExampleFactory(factory.DjangoModelFactory):
-            FACTORY_FOR = 'djapp.StandardModel'
+            class Meta:
+                model = 'djapp.StandardModel'
 
-        self.assertEqual(models.StandardModel, ExampleFactory._get_target_class())
+        self.assertEqual(models.StandardModel, ExampleFactory._get_model_class())
 
     def test_building(self):
         class ExampleFactory(factory.DjangoModelFactory):
-            FACTORY_FOR = 'djapp.StandardModel'
+            class Meta:
+                model = 'djapp.StandardModel'
 
         e = ExampleFactory.build()
         self.assertEqual(models.StandardModel, e.__class__)
@@ -233,7 +254,8 @@ class DjangoModelLoadingTestCase(django_test.TestCase):
         See https://github.com/rbarrois/factory_boy/issues/109.
         """
         class ExampleFactory(factory.DjangoModelFactory):
-            FACTORY_FOR = 'djapp.StandardModel'
+            class Meta:
+                model = 'djapp.StandardModel'
 
         class Example2Factory(ExampleFactory):
             pass
@@ -247,14 +269,16 @@ class DjangoModelLoadingTestCase(django_test.TestCase):
         See https://github.com/rbarrois/factory_boy/issues/109.
         """
         class ExampleFactory(factory.DjangoModelFactory):
-            FACTORY_FOR = 'djapp.StandardModel'
+            class Meta:
+                model = 'djapp.StandardModel'
 
             foo = factory.Sequence(lambda n: n)
 
         class Example2Factory(ExampleFactory):
-            FACTORY_FOR = 'djapp.StandardSon'
+            class Meta:
+                model = 'djapp.StandardSon'
 
-        self.assertEqual(models.StandardSon, Example2Factory._get_target_class())
+        self.assertEqual(models.StandardSon, Example2Factory._get_model_class())
 
         e1 = ExampleFactory.build()
         e2 = Example2Factory.build()
@@ -307,8 +331,13 @@ class DjangoNonIntegerPkTestCase(django_test.TestCase):
 @unittest.skipIf(django is None, "Django not installed.")
 class DjangoAbstractBaseSequenceTestCase(django_test.TestCase):
     def test_auto_sequence(self):
-        with factory.debug():
-            obj = ConcreteSonFactory()
+        """The sequence of the concrete son of an abstract model should be autonomous."""
+        obj = ConcreteSonFactory()
+        self.assertEqual(1, obj.pk)
+
+    def test_auto_sequence(self):
+        """The sequence of the concrete grandson of an abstract model should be autonomous."""
+        obj = ConcreteGrandSonFactory()
         self.assertEqual(1, obj.pk)
 
 
@@ -445,9 +474,9 @@ class DjangoImageFieldTestCase(unittest.TestCase):
         self.assertEqual('django/example.jpg', o.animage.name)
 
         i = Image.open(os.path.join(settings.MEDIA_ROOT, o.animage.name))
-        colors = i.getcolors()
-        # 169 pixels with color 190 from the GIF palette
-        self.assertEqual([(169, 190)], colors)
+        colors = i.convert('RGB').getcolors()
+        # 169 pixels with rgb(0, 0, 255)
+        self.assertEqual([(169, (0, 0, 255))], colors)
         self.assertEqual('GIF', i.format)
 
     def test_with_file(self):
@@ -550,7 +579,8 @@ class PreventSignalsTestCase(unittest.TestCase):
     def test_class_decorator(self):
         @factory.django.mute_signals(signals.pre_save, signals.post_save)
         class WithSignalsDecoratedFactory(factory.django.DjangoModelFactory):
-            FACTORY_FOR = models.WithSignals
+            class Meta:
+                model = models.WithSignals
 
         WithSignalsDecoratedFactory()
 
@@ -563,7 +593,8 @@ class PreventSignalsTestCase(unittest.TestCase):
     def test_class_decorator_build(self):
         @factory.django.mute_signals(signals.pre_save, signals.post_save)
         class WithSignalsDecoratedFactory(factory.django.DjangoModelFactory):
-            FACTORY_FOR = models.WithSignals
+            class Meta:
+                model = models.WithSignals
 
         WithSignalsDecoratedFactory.build()
 

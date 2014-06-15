@@ -32,14 +32,15 @@ from . import base
 
 class MogoFactory(base.Factory):
     """Factory for mogo objects."""
-    ABSTRACT_FACTORY = True
+    class Meta:
+        abstract = True
 
     @classmethod
-    def _build(cls, target_class, *args, **kwargs):
-        return target_class.new(*args, **kwargs)
+    def _build(cls, model_class, *args, **kwargs):
+        return model_class.new(*args, **kwargs)
 
     @classmethod
-    def _create(cls, target_class, *args, **kwargs):
-        instance = target_class.new(*args, **kwargs)
+    def _create(cls, model_class, *args, **kwargs):
+        instance = model_class.new(*args, **kwargs)
         instance.save()
         return instance

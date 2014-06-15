@@ -56,14 +56,16 @@ And now, we'll define the related factories:
 
 
     class AccountFactory(factory.Factory):
-        FACTORY_FOR = objects.Account
+        class Meta:
+            model = objects.Account
 
         username = factory.Sequence(lambda n: 'john%s' % n)
         email = factory.LazyAttribute(lambda o: '%s@example.org' % o.username)
 
 
     class ProfileFactory(factory.Factory):
-        FACTORY_FOR = objects.Profile
+        class Meta:
+            model = objects.Profile
 
         account = factory.SubFactory(AccountFactory)
         gender = factory.Iterator([objects.Profile.GENDER_MALE, objects.Profile.GENDER_FEMALE])
@@ -112,12 +114,9 @@ We can now use our factories, for tests:
         def test_get_profile_stats(self):
             profiles = []
 
-            for _ in xrange(4):
-                profiles.append(factories.ProfileFactory())
-            for _ in xrange(2):
-                profiles.append(factories.FemaleProfileFactory())
-            for _ in xrange(2):
-                profiles.append(factories.ProfileFactory(planet='Tatooine'))
+            profiles.extend(factories.ProfileFactory.batch_create(4))
+            profiles.extend(factories.FemaleProfileFactory.batch_create(2))
+            profiles.extend(factories.ProfileFactory.batch_create(2, planet="Tatooine"))
 
             stats = business_logic.profile_stats(profiles)
             self.assertEqual({'Earth': 6, 'Mars': 2}, stats.planets)
@@ -131,8 +130,7 @@ Or for fixtures:
     from . import factories
 
     def make_objects():
-        for _ in xrange(50):
-            factories.ProfileFactory()
+        factories.ProfileFactory.batch_create(size=50)
 
         # Let's create a few, known objects.
         factories.ProfileFactory(

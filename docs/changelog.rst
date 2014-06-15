@@ -12,6 +12,30 @@ ChangeLog
     - Add support for :attr:`factory.fuzzy.FuzzyInteger.step`, thanks to `ilya-pirogov <https://github.com/ilya-pirogov>`_ (:issue:`120`)
     - Add :meth:`~factory.django.mute_signals` decorator to temporarily disable some signals, thanks to `ilya-pirogov <https://github.com>`_ (:issue:`122`)
     - Add :class:`~factory.fuzzy.FuzzyFloat` (:issue:`124`)
+    - Declare target model and other non-declaration fields in a ``class Meta`` section.
+
+*Deprecation:*
+
+    - Use of ``FACTORY_FOR`` and other ``FACTORY`` class-level attributes is deprecated and will be removed in 2.5.
+      Those attributes should now declared within the :class:`class Meta <factory.FactoryOptions>` attribute:
+
+      For :class:`factory.Factory`:
+
+      * Rename :attr:`~factory.Factory.FACTORY_FOR` to :attr:`~factory.FactoryOptions.model`
+
+      * Rename :attr:`~factory.Factory.FACTORY_FOR` to :attr:`~factory.FactoryOptions.model`
+      * Rename :attr:`~factory.Factory.ABSTRACT_FACTORY` to :attr:`~factory.FactoryOptions.abstract`
+      * Rename :attr:`~factory.Factory.FACTORY_STRATEGY` to :attr:`~factory.FactoryOptions.strategy`
+      * Rename :attr:`~factory.Factory.FACTORY_ARG_PARAMETERS` to :attr:`~factory.FactoryOptions.inline_args`
+      * Rename :attr:`~factory.Factory.FACTORY_HIDDEN_ARGS` to :attr:`~factory.FactoryOptions.exclude`
+
+      For :class:`factory.django.DjangoModelFactory`:
+
+      * Rename :attr:`~factory.django.DjangoModelFactory.FACTORY_DJANGO_GET_OR_CREATE` to :attr:`~factory.django.DjangoOptions.django_get_or_create`
+
+      For :class:`factory.alchemy.SQLAlchemyModelFactory`:
+
+      * Rename :attr:`~factory.alchemy.SQLAlchemyModelFactory.FACTORY_SESSION` to :attr:`~factory.alchemy.SQLAlchemyOptions.sqlalchemy_session`
 
 .. _v2.3.1:
 

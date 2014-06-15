@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2010 Mark Sandstrom
 # Copyright (c) 2011-2013 Raphaël Barrois
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,21 +20,30 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-"""Helper to test circular factory dependencies."""
+"""Tests for deprecated features."""
+
+import warnings
 
 import factory
 
-from . import bar as bar_mod
-
-class Foo(object):
-    def __init__(self, bar, x):
-        self.bar = bar
-        self.x = x
+from .compat import mock, unittest
+from . import tools
 
 
-class FooFactory(factory.Factory):
-    class Meta:
-        model = Foo
+class DeprecationTests(unittest.TestCase):
+    def test_factory_for(self):
+        class Foo(object):
+            pass
 
-    x = 42
-    bar = factory.SubFactory(bar_mod.BarFactory)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('always')
+            class FooFactory(factory.Factory):
+                FACTORY_FOR = Foo
+
+            self.assertEqual(1, len(w))
+            warning = w[0]
+            # Message is indeed related to the current file
+            # This is to ensure error messages are readable by end users.
+            self.assertIn(warning.filename, __file__)
+            self.assertIn('FACTORY_FOR', str(warning.message))
+            self.assertIn('model', str(warning.message))

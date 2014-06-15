@@ -45,7 +45,7 @@ setup(
     packages=['factory'],
     license='MIT',
     tests_require=[
-        'mock',
+        #'mock',
     ],
     classifiers=[
         "Development Status :: 5 - Production/Stable",

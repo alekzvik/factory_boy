@@ -6,20 +6,61 @@ factory_boy
 
 factory_boy is a fixtures replacement based on thoughtbot's `factory_girl <http://github.com/thoughtbot/factory_girl>`_.
 
-Its features include:
+As a fixtures replacement tool, it aims to replace static, hard to maintain fixtures
+with easy-to-use factories for complex object.
 
-- Straightforward syntax
+Instead of building an exhaustive test setup with every possible combination of corner cases,
+``factory_boy`` allows you to use objects customized for the current test,
+while only declaring the test-specific fields:
+
+.. code-block:: python
+
+    class FooTests(unittest.TestCase):
+
+        def test_with_factory_boy(self):
+            # We need a 200€, paid order, shipping to australia, for a VIP customer
+            order = OrderFactory(
+                amount=200,
+                status='PAID',
+                customer__is_vip=True,
+                address__country='AU',
+            )
+            # Run the tests here
+
+        def test_without_factory_boy(self):
+            address = Address(
+                street="42 fubar street",
+                zipcode="42Z42",
+                city="Sydney",
+                country="AU",
+            )
+            customer = Customer(
+                first_name="John",
+                last_name="Doe",
+                phone="+1234",
+                email="john.doe@example.org",
+                active=True,
+                is_vip=True,
+                address=address,
+            )
+            # etc.
+
+factory_boy is designed to work well with various ORMs (Django, Mogo, SQLAlchemy),
+and can easily be extended for other libraries.
+
+Its main features include:
+
+- Straightforward declarative syntax
+- Chaining factory calls while retaining the global context
 - Support for multiple build strategies (saved/unsaved instances, attribute dicts, stubbed objects)
-- Powerful helpers for common cases (sequences, sub-factories, reverse dependencies, circular factories, ...)
 - Multiple factories per class support, including inheritance
-- Support for various ORMs (currently Django, Mogo, SQLAlchemy)
 
 
 Links
 -----
 
 * Documentation: http://factoryboy.readthedocs.org/
-* Official repository: https://github.com/rbarrois/factory_boy
+* Repository: https://github.com/rbarrois/factory_boy
 * Package: https://pypi.python.org/pypi/factory_boy/
 
 factory_boy supports Python 2.6, 2.7, 3.2 and 3.3, as well as PyPy; it requires only the standard Python library.
@@ -53,7 +94,8 @@ Usage
 Defining factories
 """"""""""""""""""
 
-Factories declare a set of attributes used to instantiate an object. The class of the object must be defined in the FACTORY_FOR attribute:
+Factories declare a set of attributes used to instantiate an object.
+The class of the object must be defined in the ``model`` field of a ``class Meta:`` attribute:
 
 .. code-block:: python
 
@@ -61,7 +103,8 @@ Factories declare a set of attributes used to instantiate an object. The class o
     from . import models
 
     class UserFactory(factory.Factory):
-        FACTORY_FOR = models.User
+        class Meta:
+            model = models.User
 
         first_name = 'John'
         last_name = 'Doe'
@@ -69,7 +112,8 @@ Factories declare a set of attributes used to instantiate an object. The class o
 
     # Another, different, factory for the same object
     class AdminFactory(factory.Factory):
-        FACTORY_FOR = models.User
+        class Meta:
+            model = models.User
 
         first_name = 'Admin'
         last_name = 'User'
@@ -111,6 +155,16 @@ No matter which strategy is used, it's possible to override the defined attribut
     "Joe"
 
 
+It is also possible to create a bunch of objects in a single call:
+
+.. code-block:: pycon
+
+    >>> users = USerFactory.build(10, first_name="Joe")
+    >>> len(users)
+    10
+    >>> [user.first_name for user in users]
+    ["Joe", "Joe", "Joe", "Joe", "Joe", "Joe", "Joe", "Joe", "Joe", "Joe"]
+
 Lazy Attributes
 """""""""""""""
 
@@ -123,7 +177,9 @@ These "lazy" attributes can be added as follows:
 .. code-block:: python
 
     class UserFactory(factory.Factory):
-        FACTORY_FOR = models.User
+        class Meta:
+            model = models.User
+
         first_name = 'Joe'
         last_name = 'Blow'
         email = factory.LazyAttribute(lambda a: '{0}.{1}@example.com'.format(a.first_name, a.last_name).lower())
@@ -142,7 +198,9 @@ Unique values in a specific format (for example, e-mail addresses) can be genera
 .. code-block:: python
 
     class UserFactory(factory.Factory):
-        FACTORY_FOR = models.User
+        class Meta:
+            model = models.User
+
         email = factory.Sequence(lambda n: 'person{0}@example.com'.format(n))
 
     >>> UserFactory().email
@@ -160,7 +218,9 @@ This is handled by the ``SubFactory`` helper:
 .. code-block:: python
 
     class PostFactory(factory.Factory):
-        FACTORY_FOR = models.Post
+        class Meta:
+            model = models.Post
+
         author = factory.SubFactory(UserFactory)
 
 

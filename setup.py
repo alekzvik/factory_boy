@@ -43,9 +43,6 @@ setup(
     keywords=['factory_boy', 'factory', 'fixtures'],
     packages=['factory'],
     license='MIT',
-    setup_requires=[
-        'setuptools>=0.8',
-    ],
     tests_require=[
         'mock',
     ],
